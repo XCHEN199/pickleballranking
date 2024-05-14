@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickle-ball Game Rankings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #4CAF50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        form {
+            margin-top: 20px;
+        }
+        input[type="text"], input[type="date"], select {
+            width: calc(50% - 12px);
+            padding: 8px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            width: calc(50% - 12px);
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Pickle-ball Game Rankings</h1>
+</header>
+
+<section>
+    <h2>Score Rules</h2>
+    <p>Players earn points based on the following rules:</p>
+    <ul>
+        <li>Attendance: 2 points for attending the entire day's event.</li>
+        <li>Game Performance:
+            <ul>
+                <li>If the total score of the winning players is higher than the total score of the losing players, each winning player earns 1 point.</li>
+                <li>If the total score of the winning players is lower than the total score of the losing players, each winning player earns 2 points.</li>
+                <li>If the total score of the winning players is equal to the total score of the losing players, each winning player earns 1.5 points.</li>
+                <li>If one or more players are not part of the ranking system, the winning players who are part of the ranking system earn 1 point.</li>
+            </ul>
+        </li>
+    </ul>
+</section>
+
+<section>
+    <h2>Player Rankings</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Total Score</th>
+            </tr>
+        </thead>
+        <tbody id="rankingTable">
+            <!-- Rankings will be populated here -->
+        </tbody>
+    </table>
+</section>
+
+<section>
+    <h2>Player Attendance and Scores</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Player</th>
+                <th>Attendance Score</th>
+                <th>Game Winner Score</th>
+                <th>Final Score</th>
+            </tr>
+        </thead>
+        <tbody id="scoreTable">
+            <!-- Scores will be populated here -->
+        </tbody>
+    </table>
+</section>
+
+<section>
+    <h2>Report Attendance and Game Results</h2>
+    <form id="reportForm">
+        <label for="playerName">Player Name:</label>
+        <input type="text" id="playerName" name="playerName" required>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+
+        <label for="attendance">Attendance:</label>
+        <select id="attendance" name="attendance" required>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+        </select>
+
+        <label for="gameResult">Game Result:</label>
+        <select id="gameResult" name="gameResult" required>
+            <option value="winHigher">Win - Higher Score</option>
+            <option value="winLower">Win - Lower Score</option>
+            <option value="winEqual">Win - Equal Score</option>
+            <option value="unranked">Unranked Player</option>
+            <option value="lose">Lose</option>
+        </select>
+
+        <input type="submit" value="Submit">
+    </form>
+</section>
+
+<script>
+    const form = document.getElementById('reportForm');
+    const rankingTable = document.getElementById('rankingTable');
+    const scoreTable = document.getElementById('scoreTable');
+    
+    let players = [];
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const playerName = form.playerName.value;
+        const date = form.date.value;
+        const attendance = form.attendance.value;
+        const gameResult = form.gameResult.value;
+
+        let attendanceScore = attendance === 'yes' ? 2 : 0;
+        let gameWinnerScore = 0;
+
+        if (gameResult === 'winHigher') {
+            gameWinnerScore = 1;
+        } else if (gameResult === 'winLower') {
+            gameWinnerScore = 2;
+        } else if (gameResult === 'winEqual') {
+            gameWinnerScore = 1.5;
+        } else if (gameResult === 'unranked') {
+            gameWinnerScore = 1;
+        } else {
+            gameWin
