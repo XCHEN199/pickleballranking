@@ -74,13 +74,14 @@
     <h2>Score Rules</h2>
     <p>Players earn points based on the following rules:</p>
     <ul>
-        <li>Attendance: 2 points for attending the entire day's event.</li>
+        <li>Attendance: 2 points for attending one day's event.</li>
         <li>Game Performance:
             <ul>
                 <li>If the total score of the winning players is higher than the total score of the losing players, each winning player earns 1 point.</li>
                 <li>If the total score of the winning players is lower than the total score of the losing players, each winning player earns 2 points.</li>
                 <li>If the total score of the winning players is equal to the total score of the losing players, each winning player earns 1.5 points.</li>
                 <li>If one or more players are not part of the ranking system, the winning players who are part of the ranking system earn 1 point.</li>
+                <li>The calculation of total score of winning or losing players is based on the player's latest previous date's score.</li>
             </ul>
         </li>
     </ul>
@@ -124,7 +125,11 @@
     <h2>Report Attendance and Game Results</h2>
     <form id="reportForm">
         <label for="playerName">Player Name:</label>
-        <input type="text" id="playerName" name="playerName" required>
+        <select id="playerName" name="playerName" required>
+            <option value="">Select Player</option>
+            <option value="Non-ranked Player">Non-ranked Player</option>
+            <!-- Other player names will be dynamically populated here -->
+        </select>
 
         <label for="date">Date:</label>
         <input type="date" id="date" name="date" required>
@@ -144,6 +149,12 @@
             <option value="lose">Lose</option>
         </select>
 
+        <label for="winnerPlayers">Winner Players:</label>
+        <input type="text" id="winnerPlayers" name="winnerPlayers" required>
+
+        <label for="loserPlayers">Loser Players:</label>
+        <input type="text" id="loserPlayers" name="loserPlayers" required>
+
         <input type="submit" value="Submit">
     </form>
 </section>
@@ -162,17 +173,50 @@
         const date = form.date.value;
         const attendance = form.attendance.value;
         const gameResult = form.gameResult.value;
+        const winnerPlayers = form.winnerPlayers.value;
+        const loserPlayers = form.loserPlayers.value;
 
-        let attendanceScore = attendance === 'yes' ? 2 : 0;
-        let gameWinnerScore = 0;
+        // Submit data to the server for approval
+        fetch('https://example.com/submit-game', {  // Change to your server URL
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                playerName,
+                date,
+                attendance,
+                gameResult,
+                winnerPlayers,
+                loserPlayers,
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Game results submitted for approval.');
+            form.reset();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
 
-        if (gameResult === 'winHigher') {
-            gameWinnerScore = 1;
-        } else if (gameResult === 'winLower') {
-            gameWinnerScore = 2;
-        } else if (gameResult === 'winEqual') {
-            gameWinnerScore = 1.5;
-        } else if (gameResult === 'unranked') {
-            gameWinnerScore = 1;
-        } else {
-            gameWin
+    function updatePlayerDropdown() {
+        fetch('https://example.com/players')  // Change to your server URL
+        .then(response => response.json())
+        .then(data => {
+            const playerSelect = document.getElementById('playerName');
+            playerSelect.innerHTML = '<option value="">Select Player</option>';
+            playerSelect.innerHTML += '<option value="Non-ranked Player">Non-ranked Player</option>';
+            data.players.forEach(player => {
+                playerSelect.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.latestScore})</option>`;
+            });
+        });
+    }
+
+    // Fetch initial player list
+    updatePlayerDropdown();
+</script>
+
+</body>
+</html>
