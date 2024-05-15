@@ -143,30 +143,37 @@
 </section>
 
 <section>
-    <h2>Report Attendance and Game Results</h2>
-    <form id="reportForm">
-        <label for="playerName">Player Name:</label>
-        <input type="text" id="playerName" name="playerName" placeholder="Enter new player name or select below">
-
-        <label for="existingPlayerName">Existing Player Name:</label>
-        <select id="existingPlayerName" name="existingPlayerName">
+    <h2>Report Attendance</h2>
+    <form id="reportAttendanceForm">
+        <label for="attendancePlayerName">Player Name:</label>
+        <select id="attendancePlayerName" name="attendancePlayerName" required>
             <option value="">Select Player</option>
-            <option value="Non-ranked Player">Non-ranked Player</option>
-            <!-- Other player names will be dynamically populated here -->
+            <!-- Existing player names will be dynamically populated here -->
         </select>
 
-        <label for="date">Date:</label>
-        <input type="date" id="date" name="date" required>
+        <label for="attendanceDate">Date:</label>
+        <input type="date" id="attendanceDate" name="attendanceDate" required>
 
-        <label for="attendance">Attendance:</label>
-        <select id="attendance" name="attendance" required>
+        <label for="attendanceStatus">Attendance:</label>
+        <select id="attendanceStatus" name="attendanceStatus" required>
             <option value="yes">Yes</option>
             <option value="no">No</option>
         </select>
 
+        <input type="submit" value="Submit">
+    </form>
+</section>
+
+<section>
+    <h2>Report Game Results</h2>
+    <form id="reportGameResultsForm">
+        <label for="gameDate">Date:</label>
+        <input type="date" id="gameDate" name="gameDate" required>
+
         <label for="winnerPlayer1">Winner Player 1:</label>
         <select id="winnerPlayer1" name="winnerPlayer1" required>
             <option value="">Select Player</option>
+            <!-- Existing player names will be dynamically populated here -->
         </select>
 
         <label for="winnerPlayer2">Winner Player 2:</label>
@@ -189,8 +196,9 @@
 </section>
 
 <script>
-    const form = document.getElementById('reportForm');
     const addPlayerForm = document.getElementById('addPlayerForm');
+    const reportAttendanceForm = document.getElementById('reportAttendanceForm');
+    const reportGameResultsForm = document.getElementById('reportGameResultsForm');
     const rankingTable = document.getElementById('rankingTable');
     const scoreTable = document.getElementById('scoreTable');
 
@@ -219,30 +227,51 @@
         addPlayerForm.reset();
     });
 
-    form.addEventListener('submit', function(event) {
+    reportAttendanceForm.addEventListener('submit', function(event) {
         event.preventDefault();
 
-        const playerNameInput = form.playerName.value.trim();
-        const existingPlayerName = form.existingPlayerName.value;
-        const playerName = playerNameInput || existingPlayerName;
-        const date = form.date.value;
-        const attendance = form.attendance.value;
-        const winnerPlayer1 = form.winnerPlayer1.value;
-        const winnerPlayer2 = form.winnerPlayer2.value;
-        const loserPlayer1 = form.loserPlayer1.value;
-        const loserPlayer2 = form.loserPlayer2.value;
+        const playerName = document.getElementById('attendancePlayerName').value;
+        const date = document.getElementById('attendanceDate').value;
+        const attendance = document.getElementById('attendanceStatus').value;
 
         if (!playerName) {
-            alert('Please enter a new player name or select an existing player name.');
+            alert('Please select a player name.');
             return;
         }
 
-        // Check if player name already exists
-        const existingPlayer = players.find(player => player.name.toLowerCase() === playerName.toLowerCase());
+        // Submit attendance data to the server for approval
+        fetch('https://example.com/submit-attendance', {  // Change to your server URL
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                playerName,
+                date,
+                attendance,
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Attendance submitted for approval.');
+            reportAttendanceForm.reset();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
 
-        if (existingPlayer && playerNameInput) {
-            alert('Player name already exists. Please select from the existing players.');
-            form.existingPlayerName.value = existingPlayer.name;
+    reportGameResultsForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const date = document.getElementById('gameDate').value;
+        const winnerPlayer1 = document.getElementById('winnerPlayer1').value;
+        const winnerPlayer2 = document.getElementById('winnerPlayer2').value;
+        const loserPlayer1 = document.getElementById('loserPlayer1').value;
+        const loserPlayer2 = document.getElementById('loserPlayer2').value;
+
+        if (!winnerPlayer1 || !winnerPlayer2 || !loserPlayer1 || !loserPlayer2) {
+            alert('Please select all players for the game.');
             return;
         }
 
@@ -272,16 +301,14 @@
                 gameResult = 'winEqual';
             }
 
-            // Submit data to the server for approval
+            // Submit game result data to the server for approval
             fetch('https://example.com/submit-game', {  // Change to your server URL
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    playerName,
                     date,
-                    attendance,
                     gameResult,
                     winnerPlayers: [winnerPlayer1, winnerPlayer2],
                     loserPlayers: [loserPlayer1, loserPlayer2],
@@ -290,7 +317,7 @@
             .then(response => response.json())
             .then(data => {
                 alert('Game results submitted for approval.');
-                form.reset();
+                reportGameResultsForm.reset();
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -300,7 +327,7 @@
 
     function updatePlayerDropdowns() {
         const playerSelects = [
-            document.getElementById('existingPlayerName'),
+            document.getElementById('attendancePlayerName'),
             document.getElementById('winnerPlayer1'),
             document.getElementById('winnerPlayer2'),
             document.getElementById('loserPlayer1'),
