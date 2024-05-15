@@ -44,20 +44,28 @@
             color: white;
         }
         form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-top: 20px;
         }
+        label {
+            width: 100%;
+            max-width: 200px;
+            margin-bottom: 8px;
+        }
         input[type="text"], input[type="date"], select {
-            width: calc(50% - 12px);
+            flex: 1;
             padding: 8px;
-            margin: 8px 0;
+            margin-bottom: 8px;
             box-sizing: border-box;
         }
         input[type="submit"] {
-            width: calc(50% - 12px);
+            width: 100%;
+            max-width: 200px;
             background-color: #4CAF50;
             color: white;
             padding: 10px;
-            margin: 8px 0;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -125,7 +133,10 @@
     <h2>Report Attendance and Game Results</h2>
     <form id="reportForm">
         <label for="playerName">Player Name:</label>
-        <select id="playerName" name="playerName" required>
+        <input type="text" id="playerName" name="playerName" placeholder="Enter new player name or select below">
+
+        <label for="existingPlayerName">Existing Player Name:</label>
+        <select id="existingPlayerName" name="existingPlayerName">
             <option value="">Select Player</option>
             <option value="Non-ranked Player">Non-ranked Player</option>
             <!-- Other player names will be dynamically populated here -->
@@ -168,19 +179,35 @@
     const form = document.getElementById('reportForm');
     const rankingTable = document.getElementById('rankingTable');
     const scoreTable = document.getElementById('scoreTable');
-    
+
     let players = [];
 
     form.addEventListener('submit', function(event) {
         event.preventDefault();
-        
-        const playerName = form.playerName.value;
+
+        const playerNameInput = form.playerName.value.trim();
+        const existingPlayerName = form.existingPlayerName.value;
+        const playerName = playerNameInput || existingPlayerName;
         const date = form.date.value;
         const attendance = form.attendance.value;
         const winnerPlayer1 = form.winnerPlayer1.value;
         const winnerPlayer2 = form.winnerPlayer2.value;
         const loserPlayer1 = form.loserPlayer1.value;
         const loserPlayer2 = form.loserPlayer2.value;
+
+        if (!playerName) {
+            alert('Please enter a new player name or select an existing player name.');
+            return;
+        }
+
+        // Check if player name already exists
+        const existingPlayer = players.find(player => player.name.toLowerCase() === playerName.toLowerCase());
+
+        if (existingPlayer && playerNameInput) {
+            alert('Player name already exists. Please select from the existing players.');
+            form.existingPlayerName.value = existingPlayer.name;
+            return;
+        }
 
         // Calculate scores based on previous scores
         fetch('https://example.com/get-previous-scores', {  // Change to your server URL
@@ -238,17 +265,18 @@
         fetch('https://example.com/players')  // Change to your server URL
         .then(response => response.json())
         .then(data => {
+            players = data.players;
             const playerSelects = [
-                document.getElementById('playerName'),
+                document.getElementById('existingPlayerName'),
                 document.getElementById('winnerPlayer1'),
                 document.getElementById('winnerPlayer2'),
                 document.getElementById('loserPlayer1'),
                 document.getElementById('loserPlayer2')
             ];
-            
+
             playerSelects.forEach(select => {
                 select.innerHTML = '<option value="">Select Player</option>';
-                data.players.forEach(player => {
+                players.forEach(player => {
                     select.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.latestScore})</option>`;
                 });
             });
