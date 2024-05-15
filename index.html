@@ -140,20 +140,25 @@
             <option value="no">No</option>
         </select>
 
-        <label for="gameResult">Game Result:</label>
-        <select id="gameResult" name="gameResult" required>
-            <option value="winHigher">Win - Higher Score</option>
-            <option value="winLower">Win - Lower Score</option>
-            <option value="winEqual">Win - Equal Score</option>
-            <option value="unranked">Unranked Player</option>
-            <option value="lose">Lose</option>
+        <label for="winnerPlayer1">Winner Player 1:</label>
+        <select id="winnerPlayer1" name="winnerPlayer1" required>
+            <option value="">Select Player</option>
         </select>
 
-        <label for="winnerPlayers">Winner Players:</label>
-        <input type="text" id="winnerPlayers" name="winnerPlayers" required>
+        <label for="winnerPlayer2">Winner Player 2:</label>
+        <select id="winnerPlayer2" name="winnerPlayer2" required>
+            <option value="">Select Player</option>
+        </select>
 
-        <label for="loserPlayers">Loser Players:</label>
-        <input type="text" id="loserPlayers" name="loserPlayers" required>
+        <label for="loserPlayer1">Loser Player 1:</label>
+        <select id="loserPlayer1" name="loserPlayer1" required>
+            <option value="">Select Player</option>
+        </select>
+
+        <label for="loserPlayer2">Loser Player 2:</label>
+        <select id="loserPlayer2" name="loserPlayer2" required>
+            <option value="">Select Player</option>
+        </select>
 
         <input type="submit" value="Submit">
     </form>
@@ -172,50 +177,86 @@
         const playerName = form.playerName.value;
         const date = form.date.value;
         const attendance = form.attendance.value;
-        const gameResult = form.gameResult.value;
-        const winnerPlayers = form.winnerPlayers.value;
-        const loserPlayers = form.loserPlayers.value;
+        const winnerPlayer1 = form.winnerPlayer1.value;
+        const winnerPlayer2 = form.winnerPlayer2.value;
+        const loserPlayer1 = form.loserPlayer1.value;
+        const loserPlayer2 = form.loserPlayer2.value;
 
-        // Submit data to the server for approval
-        fetch('https://example.com/submit-game', {  // Change to your server URL
+        // Calculate scores based on previous scores
+        fetch('https://example.com/get-previous-scores', {  // Change to your server URL
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                playerName,
-                date,
-                attendance,
-                gameResult,
-                winnerPlayers,
-                loserPlayers,
+                winnerPlayer1,
+                winnerPlayer2,
+                loserPlayer1,
+                loserPlayer2,
             }),
         })
         .then(response => response.json())
         .then(data => {
-            alert('Game results submitted for approval.');
-            form.reset();
-        })
-        .catch(error => {
-            console.error('Error:', error);
+            const { winnerScore, loserScore } = data;
+
+            let gameResult;
+            if (winnerScore > loserScore) {
+                gameResult = 'winHigher';
+            } else if (winnerScore < loserScore) {
+                gameResult = 'winLower';
+            } else {
+                gameResult = 'winEqual';
+            }
+
+            // Submit data to the server for approval
+            fetch('https://example.com/submit-game', {  // Change to your server URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerName,
+                    date,
+                    attendance,
+                    gameResult,
+                    winnerPlayers: [winnerPlayer1, winnerPlayer2],
+                    loserPlayers: [loserPlayer1, loserPlayer2],
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Game results submitted for approval.');
+                form.reset();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         });
     });
 
-    function updatePlayerDropdown() {
+    function updatePlayerDropdowns() {
         fetch('https://example.com/players')  // Change to your server URL
         .then(response => response.json())
         .then(data => {
-            const playerSelect = document.getElementById('playerName');
-            playerSelect.innerHTML = '<option value="">Select Player</option>';
-            playerSelect.innerHTML += '<option value="Non-ranked Player">Non-ranked Player</option>';
-            data.players.forEach(player => {
-                playerSelect.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.latestScore})</option>`;
+            const playerSelects = [
+                document.getElementById('playerName'),
+                document.getElementById('winnerPlayer1'),
+                document.getElementById('winnerPlayer2'),
+                document.getElementById('loserPlayer1'),
+                document.getElementById('loserPlayer2')
+            ];
+            
+            playerSelects.forEach(select => {
+                select.innerHTML = '<option value="">Select Player</option>';
+                data.players.forEach(player => {
+                    select.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.latestScore})</option>`;
+                });
             });
         });
     }
 
     // Fetch initial player list
-    updatePlayerDropdown();
+    updatePlayerDropdowns();
 </script>
 
 </body>
