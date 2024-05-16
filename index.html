@@ -82,6 +82,9 @@
         .form-row > label, .form-row > input, .form-row > select {
             margin-bottom: 0;
         }
+        .form-row > input[type="date"] {
+            width: calc(100% - 220px);
+        }
         .admin-only {
             display: none;
         }
@@ -183,7 +186,7 @@
         </div>
         <div class="form-row">
             <label for="attendanceDate">Date:</label>
-            <input type="date" id="attendanceDate" name="attendanceDate" required style="width: 100%;">
+            <input type="date" id="attendanceDate" name="attendanceDate" required style="width: calc(100% - 220px);">
         </div>
         <div class="form-row">
             <label for="attendanceStatus">Attendance:</label>
@@ -201,7 +204,7 @@
     <form id="reportGameResultsForm">
         <div class="form-row">
             <label for="gameDate">Date:</label>
-            <input type="date" id="gameDate" name="gameDate" required style="width: 100%;">
+            <input type="date" id="gameDate" name="gameDate" required style="width: calc(100% - 220px);">
         </div>
         <div class="form-row">
             <label for="winnerPlayer1">Winner Player 1:</label>
@@ -283,7 +286,7 @@
                 div.innerHTML = `
                     <p>Attendance - Player: ${data.playerName}, Date: ${data.date}, Status: ${data.attendance}</p>
                     <button onclick="approveAttendance('${doc.id}')">Approve</button>
-                    <button onclick="denyAttendance('${doc.id}')">Deny</button>
+                    <button onclick="denyAttendance('${doc.id}', this)">Deny</button>
                 `;
                 pendingSubmissions.appendChild(div);
             });
@@ -296,7 +299,7 @@
                 div.innerHTML = `
                     <p>Game - Date: ${data.date}, Winners: ${data.winnerPlayers.join(", ")}, Losers: ${data.loserPlayers.join(", ")}</p>
                     <button onclick="approveGame('${doc.id}')">Approve</button>
-                    <button onclick="denyGame('${doc.id}')">Deny</button>
+                    <button onclick="denyGame('${doc.id}', this)">Deny</button>
                 `;
                 pendingSubmissions.appendChild(div);
             });
@@ -315,13 +318,10 @@
         });
     }
 
-    function denyAttendance(id) {
-        db.collection("attendance").doc(id).update({
-            approved: false,
-            processed: true
-        }).then(() => {
+    function denyAttendance(id, button) {
+        db.collection("attendance").doc(id).delete().then(() => {
             alert('Attendance denied');
-            loadPendingSubmissions();
+            button.parentElement.remove();
         }).catch((error) => {
             console.error('Error denying attendance: ', error);
         });
@@ -339,13 +339,10 @@
         });
     }
 
-    function denyGame(id) {
-        db.collection("games").doc(id).update({
-            approved: false,
-            processed: true
-        }).then(() => {
+    function denyGame(id, button) {
+        db.collection("games").doc(id).delete().then(() => {
             alert('Game denied');
-            loadPendingSubmissions();
+            button.parentElement.remove();
         }).catch((error) => {
             console.error('Error denying game: ', error);
         });
@@ -389,9 +386,9 @@
         });
     }
 
-    function calculateTotalScore(players) {
+    function calculateTotalScore(playerNames) {
         let totalScore = 0;
-        players.forEach(playerName => {
+        playerNames.forEach(playerName => {
             const player = players.find(p => p.name === playerName);
             if (player) {
                 totalScore += player.latestScore || 0;
