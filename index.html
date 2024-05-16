@@ -133,6 +133,7 @@
 
 <section>
     <h2>Player Rankings</h2>
+    <p>Latest Ranking Date: <span id="latestRankingDate">N/A</span></p>
     <table>
         <thead>
             <tr>
@@ -254,6 +255,7 @@
     const scoreTable = document.getElementById('scoreTable');
     const pendingSubmissions = document.getElementById('pendingSubmissions');
     const updateRankingsButton = document.getElementById('updateRankingsButton');
+    const latestRankingDateSpan = document.getElementById('latestRankingDate');
 
     let players = [];
 
@@ -349,11 +351,16 @@
     }
 
     function updateRankings() {
+        let latestDate = null;
+        
         db.collection("attendance").where("approved", "==", true).where("processed", "==", false).get().then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 updatePlayerScore(data.playerName, 2); // Attendance score
                 db.collection("attendance").doc(doc.id).update({ processed: true });
+                if (!latestDate || new Date(data.date) > new Date(latestDate)) {
+                    latestDate = data.date;
+                }
             });
         });
 
@@ -377,9 +384,16 @@
 
                 winnerPlayers.forEach(player => updatePlayerScore(player, points));
                 db.collection("games").doc(doc.id).update({ processed: true });
+                if (!latestDate || new Date(data.date) > new Date(latestDate)) {
+                    latestDate = data.date;
+                }
             });
         }).then(() => {
             fetchRankings();
+            fetchScores();
+            if (latestDate) {
+                latestRankingDateSpan.textContent = latestDate;
+            }
             alert('Rankings updated');
         }).catch((error) => {
             console.error('Error updating rankings: ', error);
@@ -420,6 +434,65 @@
                     <td>${player.latestScore}</td>
                 `;
                 rankingTable.appendChild(row);
+            });
+        });
+    }
+
+    function fetchScores() {
+        scoreTable.innerHTML = '';
+        db.collection("attendance").where("approved", "==", true).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${data.date}</td>
+                    <td>${data.playerName}</td>
+                    <td>2</td>
+                    <td>-</td>
+                    <td>2</td>
+                `;
+                scoreTable.appendChild(row);
+            });
+        });
+
+        db.collection("games").where("approved", "==", true).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const winnerTotalScore = calculateTotalScore(data.winnerPlayers);
+                const loserTotalScore = calculateTotalScore(data.loserPlayers);
+
+                let points;
+                if (winnerTotalScore > loserTotalScore) {
+                    points = 1;
+                } else if (winnerTotalScore < loserTotalScore) {
+                    points = 2;
+                } else {
+                    points = 1.5;
+                }
+
+                data.winnerPlayers.forEach(player => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.date}</td>
+                        <td>${player}</td>
+                        <td>-</td>
+                        <td>${points}</td>
+                        <td>${points}</td>
+                    `;
+                    scoreTable.appendChild(row);
+                });
+
+                data.loserPlayers.forEach(player => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.date}</td>
+                        <td>${player}</td>
+                        <td>-</td>
+                        <td>0</td>
+                        <td>0</td>
+                    `;
+                    scoreTable.appendChild(row);
+                });
             });
         });
     }
