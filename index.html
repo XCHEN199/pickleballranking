@@ -228,12 +228,20 @@
     </form>
 </section>
 
+<section>
+    <h2>Admin: Pending Submissions</h2>
+    <div id="pendingSubmissions">
+        <!-- Pending submissions will be displayed here -->
+    </div>
+</section>
+
 <script>
     const addPlayerForm = document.getElementById('addPlayerForm');
     const reportAttendanceForm = document.getElementById('reportAttendanceForm');
     const reportGameResultsForm = document.getElementById('reportGameResultsForm');
     const rankingTable = document.getElementById('rankingTable');
     const scoreTable = document.getElementById('scoreTable');
+    const pendingSubmissions = document.getElementById('pendingSubmissions');
 
     let players = [];
 
@@ -253,6 +261,80 @@
                 players.forEach(player => {
                     select.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.latestScore})</option>`;
                 });
+            });
+        });
+    }
+
+    function loadPendingSubmissions() {
+        pendingSubmissions.innerHTML = '';
+        db.collection("attendance").where("approved", "==", false).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <p>Attendance - Player: ${data.playerName}, Date: ${data.date}, Status: ${data.attendance}</p>
+                    <button onclick="approveAttendance('${doc.id}')">Approve</button>
+                `;
+                pendingSubmissions.appendChild(div);
+            });
+        });
+
+        db.collection("games").where("approved", "==", false).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <p>Game - Date: ${data.date}, Winners: ${data.winnerPlayers.join(", ")}, Losers: ${data.loserPlayers.join(", ")}</p>
+                    <button onclick="approveGame('${doc.id}')">Approve</button>
+                `;
+                pendingSubmissions.appendChild(div);
+            });
+        });
+    }
+
+    function approveAttendance(id) {
+        db.collection("attendance").doc(id).update({
+            approved: true
+        }).then(() => {
+            alert('Attendance approved');
+            loadPendingSubmissions();
+            updateRankings();
+        }).catch((error) => {
+            console.error('Error approving attendance: ', error);
+        });
+    }
+
+    function approveGame(id) {
+        db.collection("games").doc(id).update({
+            approved: true
+        }).then(() => {
+            alert('Game approved');
+            loadPendingSubmissions();
+            updateRankings();
+        }).catch((error) => {
+            console.error('Error approving game: ', error);
+        });
+    }
+
+    function updateRankings() {
+        // Implement your ranking update logic here
+        console.log('Rankings updated');
+        // After updating rankings, fetch the latest rankings and display them
+        fetchRankings();
+    }
+
+    function fetchRankings() {
+        rankingTable.innerHTML = '';
+        db.collection("players").orderBy("latestScore", "desc").get().then((querySnapshot) => {
+            querySnapshot.forEach((doc, index) => {
+                const player = doc.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${player.name}</td>
+                    <td>${player.latestScore}</td>
+                `;
+                rankingTable.appendChild(row);
             });
         });
     }
@@ -302,11 +384,13 @@
         db.collection("attendance").add({
             playerName,
             date,
-            attendance
+            attendance,
+            approved: false
         }).then(() => {
             console.log('Attendance submitted successfully');
             alert('Attendance submitted for approval.');
             reportAttendanceForm.reset();
+            loadPendingSubmissions();
         }).catch((error) => {
             console.error('Error submitting attendance: ', error);
         });
@@ -329,18 +413,21 @@
         db.collection("games").add({
             date,
             winnerPlayers: [winnerPlayer1, winnerPlayer2],
-            loserPlayers: [loserPlayer1, loserPlayer2]
+            loserPlayers: [loserPlayer1, loserPlayer2],
+            approved: false
         }).then(() => {
             console.log('Game results submitted successfully');
             alert('Game results submitted for approval.');
             reportGameResultsForm.reset();
+            loadPendingSubmissions();
         }).catch((error) => {
             console.error('Error submitting game results: ', error);
         });
     });
 
-    // Fetch initial player list
+    // Fetch initial player list and pending submissions
     updatePlayerDropdowns();
+    loadPendingSubmissions();
 </script>
 
 </body>
