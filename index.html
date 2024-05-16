@@ -82,6 +82,9 @@
         .form-row > label, .form-row > input, .form-row > select {
             margin-bottom: 0;
         }
+        .admin-only {
+            display: none;
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
@@ -159,7 +162,7 @@
     </table>
 </section>
 
-<section>
+<section class="admin-only">
     <h2>Add New Player</h2>
     <form id="addPlayerForm">
         <label for="newPlayerName">New Player Name:</label>
@@ -198,7 +201,7 @@
     <form id="reportGameResultsForm">
         <div class="form-row">
             <label for="gameDate">Date:</label>
-            <input type="date" id="gameDate" name="gameDate" required>
+            <input type="date" id="gameDate" name="gameDate" required style="width: 100%;">
         </div>
         <div class="form-row">
             <label for="winnerPlayer1">Winner Player 1:</label>
@@ -228,11 +231,16 @@
     </form>
 </section>
 
-<section>
+<section class="admin-only">
     <h2>Admin: Pending Submissions</h2>
     <div id="pendingSubmissions">
         <!-- Pending submissions will be displayed here -->
     </div>
+</section>
+
+<section class="admin-only">
+    <h2>Admin: Update Rankings</h2>
+    <button onclick="updateRankings()">Update Rankings</button>
 </section>
 
 <script>
@@ -425,9 +433,20 @@
         });
     });
 
+    function checkAdmin() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdmin = urlParams.get('admin') === 'true';
+        if (isAdmin) {
+            document.querySelectorAll('.admin-only').forEach(section => {
+                section.style.display = 'block';
+            });
+        }
+    }
+
     // Fetch initial player list and pending submissions
     updatePlayerDropdowns();
     loadPendingSubmissions();
+    checkAdmin();
 </script>
 
 </body>
