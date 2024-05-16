@@ -352,8 +352,10 @@
 
     function updateRankings() {
         let latestDate = null;
-        
+        console.log("Updating rankings...");
+
         db.collection("attendance").where("approved", "==", true).where("processed", "==", false).get().then((querySnapshot) => {
+            console.log("Processing attendance records...");
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 updatePlayerScore(data.playerName, 2); // Attendance score
@@ -365,6 +367,7 @@
         });
 
         db.collection("games").where("approved", "==", true).where("processed", "==", false).get().then((querySnapshot) => {
+            console.log("Processing game records...");
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 // Calculate game scores based on rules
@@ -389,6 +392,7 @@
                 }
             });
         }).then(() => {
+            console.log("Fetching updated rankings...");
             fetchRankings();
             fetchScores();
             if (latestDate) {
@@ -417,6 +421,7 @@
             if (doc.exists) {
                 const player = doc.data();
                 const newScore = (player.latestScore || 0) + score;
+                console.log(`Updating score for ${playerName}: ${newScore}`);
                 playerDoc.update({ latestScore: newScore });
             }
         });
