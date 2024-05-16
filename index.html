@@ -55,7 +55,7 @@
             margin-bottom: 8px;
         }
         input[type="text"], input[type="date"], select {
-            flex: 1;
+            flex: 2;
             padding: 8px;
             margin-bottom: 8px;
             box-sizing: border-box;
@@ -278,6 +278,7 @@
             name: newPlayerName,
             latestScore: 0
         }).then(() => {
+            console.log('Player added successfully');
             updatePlayerDropdowns();
             alert('Player added successfully.');
             addPlayerForm.reset();
@@ -303,6 +304,7 @@
             date,
             attendance
         }).then(() => {
+            console.log('Attendance submitted successfully');
             alert('Attendance submitted for approval.');
             reportAttendanceForm.reset();
         }).catch((error) => {
@@ -329,6 +331,7 @@
             winnerPlayers: [winnerPlayer1, winnerPlayer2],
             loserPlayers: [loserPlayer1, loserPlayer2]
         }).then(() => {
+            console.log('Game results submitted successfully');
             alert('Game results submitted for approval.');
             reportGameResultsForm.reset();
         }).catch((error) => {
