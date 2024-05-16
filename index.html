@@ -240,7 +240,7 @@
 
 <section class="admin-only">
     <h2>Admin: Update Rankings</h2>
-    <button onclick="updateRankings()">Update Rankings</button>
+    <button id="updateRankingsButton">Update Rankings</button>
 </section>
 
 <script>
@@ -250,6 +250,7 @@
     const rankingTable = document.getElementById('rankingTable');
     const scoreTable = document.getElementById('scoreTable');
     const pendingSubmissions = document.getElementById('pendingSubmissions');
+    const updateRankingsButton = document.getElementById('updateRankingsButton');
 
     let players = [];
 
@@ -282,6 +283,7 @@
                 div.innerHTML = `
                     <p>Attendance - Player: ${data.playerName}, Date: ${data.date}, Status: ${data.attendance}</p>
                     <button onclick="approveAttendance('${doc.id}')">Approve</button>
+                    <button onclick="denyAttendance('${doc.id}')">Deny</button>
                 `;
                 pendingSubmissions.appendChild(div);
             });
@@ -294,6 +296,7 @@
                 div.innerHTML = `
                     <p>Game - Date: ${data.date}, Winners: ${data.winnerPlayers.join(", ")}, Losers: ${data.loserPlayers.join(", ")}</p>
                     <button onclick="approveGame('${doc.id}')">Approve</button>
+                    <button onclick="denyGame('${doc.id}')">Deny</button>
                 `;
                 pendingSubmissions.appendChild(div);
             });
@@ -302,33 +305,110 @@
 
     function approveAttendance(id) {
         db.collection("attendance").doc(id).update({
-            approved: true
+            approved: true,
+            processed: true
         }).then(() => {
             alert('Attendance approved');
             loadPendingSubmissions();
-            updateRankings();
         }).catch((error) => {
             console.error('Error approving attendance: ', error);
         });
     }
 
+    function denyAttendance(id) {
+        db.collection("attendance").doc(id).update({
+            approved: false,
+            processed: true
+        }).then(() => {
+            alert('Attendance denied');
+            loadPendingSubmissions();
+        }).catch((error) => {
+            console.error('Error denying attendance: ', error);
+        });
+    }
+
     function approveGame(id) {
         db.collection("games").doc(id).update({
-            approved: true
+            approved: true,
+            processed: true
         }).then(() => {
             alert('Game approved');
             loadPendingSubmissions();
-            updateRankings();
         }).catch((error) => {
             console.error('Error approving game: ', error);
         });
     }
 
+    function denyGame(id) {
+        db.collection("games").doc(id).update({
+            approved: false,
+            processed: true
+        }).then(() => {
+            alert('Game denied');
+            loadPendingSubmissions();
+        }).catch((error) => {
+            console.error('Error denying game: ', error);
+        });
+    }
+
     function updateRankings() {
-        // Implement your ranking update logic here
-        console.log('Rankings updated');
-        // After updating rankings, fetch the latest rankings and display them
-        fetchRankings();
+        db.collection("attendance").where("approved", "==", true).where("processed", "==", false).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                updatePlayerScore(data.playerName, 2); // Attendance score
+                db.collection("attendance").doc(doc.id).update({ processed: true });
+            });
+        });
+
+        db.collection("games").where("approved", "==", true).where("processed", "==", false).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                // Calculate game scores based on rules
+                const winnerPlayers = data.winnerPlayers;
+                const loserPlayers = data.loserPlayers;
+                const winnerTotalScore = calculateTotalScore(winnerPlayers);
+                const loserTotalScore = calculateTotalScore(loserPlayers);
+
+                let points;
+                if (winnerTotalScore > loserTotalScore) {
+                    points = 1;
+                } else if (winnerTotalScore < loserTotalScore) {
+                    points = 2;
+                } else {
+                    points = 1.5;
+                }
+
+                winnerPlayers.forEach(player => updatePlayerScore(player, points));
+                db.collection("games").doc(doc.id).update({ processed: true });
+            });
+        }).then(() => {
+            fetchRankings();
+            alert('Rankings updated');
+        }).catch((error) => {
+            console.error('Error updating rankings: ', error);
+        });
+    }
+
+    function calculateTotalScore(players) {
+        let totalScore = 0;
+        players.forEach(playerName => {
+            const player = players.find(p => p.name === playerName);
+            if (player) {
+                totalScore += player.latestScore || 0;
+            }
+        });
+        return totalScore;
+    }
+
+    function updatePlayerScore(playerName, score) {
+        const playerDoc = db.collection("players").doc(playerName);
+        playerDoc.get().then((doc) => {
+            if (doc.exists) {
+                const player = doc.data();
+                const newScore = (player.latestScore || 0) + score;
+                playerDoc.update({ latestScore: newScore });
+            }
+        });
     }
 
     function fetchRankings() {
@@ -364,7 +444,7 @@
             return;
         }
 
-        db.collection("players").add({
+        db.collection("players").doc(newPlayerName).set({
             name: newPlayerName,
             latestScore: 0
         }).then(() => {
@@ -393,7 +473,8 @@
             playerName,
             date,
             attendance,
-            approved: false
+            approved: false,
+            processed: false
         }).then(() => {
             console.log('Attendance submitted successfully');
             alert('Attendance submitted for approval.');
@@ -422,7 +503,8 @@
             date,
             winnerPlayers: [winnerPlayer1, winnerPlayer2],
             loserPlayers: [loserPlayer1, loserPlayer2],
-            approved: false
+            approved: false,
+            processed: false
         }).then(() => {
             console.log('Game results submitted successfully');
             alert('Game results submitted for approval.');
@@ -447,6 +529,9 @@
     updatePlayerDropdowns();
     loadPendingSubmissions();
     checkAdmin();
+
+    // Add event listener to the Update Rankings button
+    updateRankingsButton.addEventListener('click', updateRankings);
 </script>
 
 </body>
