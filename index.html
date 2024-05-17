@@ -538,7 +538,8 @@
 
         db.collection("players").doc(newPlayerName).set({
             name: newPlayerName,
-            latestScore: 0
+            latestScore: 0,
+            totalScore: 0
         }).then(() => {
             console.log('Player added successfully');
             updatePlayerDropdowns();
