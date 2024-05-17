@@ -91,6 +91,9 @@
         .admin-only {
             display: none;
         }
+        .hidden {
+            display: none;
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
@@ -160,7 +163,6 @@
                 <th>Player</th>
                 <th>Attendance Score</th>
                 <th>Game Winner Score</th>
-                <th>Final Score</th>
                 <th>Note</th>
             </tr>
         </thead>
@@ -215,24 +217,28 @@
             <label for="winnerPlayer1">Winner Player 1:</label>
             <select id="winnerPlayer1" name="winnerPlayer1" required>
                 <option value="">Select Player</option>
+                <option value="Unranked Player">Unranked Player</option>
             </select>
         </div>
         <div class="form-row">
             <label for="winnerPlayer2">Winner Player 2:</label>
             <select id="winnerPlayer2" name="winnerPlayer2" required>
                 <option value="">Select Player</option>
+                <option value="Unranked Player">Unranked Player</option>
             </select>
         </div>
         <div class="form-row">
             <label for="loserPlayer1">Loser Player 1:</label>
             <select id="loserPlayer1" name="loserPlayer1" required>
                 <option value="">Select Player</option>
+                <option value="Unranked Player">Unranked Player</option>
             </select>
         </div>
         <div class="form-row">
             <label for="loserPlayer2">Loser Player 2:</label>
             <select id="loserPlayer2" name="loserPlayer2" required>
                 <option value="">Select Player</option>
+                <option value="Unranked Player">Unranked Player</option>
             </select>
         </div>
         <input type="submit" value="Submit">
@@ -276,6 +282,7 @@
 
             playerSelects.forEach(select => {
                 select.innerHTML = '<option value="">Select Player</option>';
+                select.innerHTML += '<option value="Unranked Player">Unranked Player</option>';
                 players.forEach(player => {
                     select.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.latestScore})</option>`;
                 });
@@ -381,15 +388,23 @@
                 const loserTotalScore = calculateTotalScore(loserPlayers);
 
                 let points;
-                if (winnerTotalScore > loserTotalScore) {
+                if (data.winnerPlayers.includes("Unranked Player") || data.loserPlayers.includes("Unranked Player")) {
                     points = 1;
-                } else if (winnerTotalScore < loserTotalScore) {
-                    points = 2;
                 } else {
-                    points = 1.5;
+                    if (winnerTotalScore > loserTotalScore) {
+                        points = 1;
+                    } else if (winnerTotalScore < loserTotalScore) {
+                        points = 2;
+                    } else {
+                        points = 1.5;
+                    }
                 }
 
-                winnerPlayers.forEach(player => updatePlayerScore(player, points));
+                winnerPlayers.forEach(player => {
+                    if (player !== "Unranked Player") {
+                        updatePlayerScore(player, points);
+                    }
+                });
                 db.collection("games").doc(doc.id).update({ processed: true });
                 if (!latestDate || new Date(data.date) > new Date(latestDate)) {
                     latestDate = data.date;
@@ -411,9 +426,11 @@
     function calculateTotalScore(playerNames) {
         let totalScore = 0;
         playerNames.forEach(playerName => {
-            const player = players.find(p => p.name === playerName);
-            if (player) {
-                totalScore += player.latestScore || 0;
+            if (playerName !== "Unranked Player") {
+                const player = players.find(p => p.name === playerName);
+                if (player) {
+                    totalScore += player.latestScore || 0;
+                }
             }
         });
         return totalScore;
@@ -458,7 +475,6 @@
                     <td>${data.playerName}</td>
                     <td>2</td>
                     <td>-</td>
-                    <td>2</td>
                     <td>Attendance</td>
                 `;
                 scoreTable.appendChild(row);
@@ -472,25 +488,30 @@
                 const loserTotalScore = calculateTotalScore(data.loserPlayers);
 
                 let points;
-                if (winnerTotalScore > loserTotalScore) {
+                if (data.winnerPlayers.includes("Unranked Player") || data.loserPlayers.includes("Unranked Player")) {
                     points = 1;
-                } else if (winnerTotalScore < loserTotalScore) {
-                    points = 2;
                 } else {
-                    points = 1.5;
+                    if (winnerTotalScore > loserTotalScore) {
+                        points = 1;
+                    } else if (winnerTotalScore < loserTotalScore) {
+                        points = 2;
+                    } else {
+                        points = 1.5;
+                    }
                 }
 
                 data.winnerPlayers.forEach(player => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${data.date}</td>
-                        <td>${player}</td>
-                        <td>-</td>
-                        <td>${points}</td>
-                        <td>${points}</td>
-                        <td>Winners: ${data.winnerPlayers.join(", ")}, Losers: ${data.loserPlayers.join(", ")}</td>
-                    `;
-                    scoreTable.appendChild(row);
+                    if (player !== "Unranked Player") {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${data.date}</td>
+                            <td>${player}</td>
+                            <td>-</td>
+                            <td>${points}</td>
+                            <td>Winners: ${data.winnerPlayers.join(", ")}, Losers: ${data.loserPlayers.join(", ")}</td>
+                        `;
+                        scoreTable.appendChild(row);
+                    }
                 });
             });
         });
