@@ -161,6 +161,7 @@
                 <th>Attendance Score</th>
                 <th>Game Winner Score</th>
                 <th>Final Score</th>
+                <th>Note</th>
             </tr>
         </thead>
         <tbody id="scoreTable">
@@ -458,6 +459,7 @@
                     <td>2</td>
                     <td>-</td>
                     <td>2</td>
+                    <td>Attendance</td>
                 `;
                 scoreTable.appendChild(row);
             });
@@ -486,18 +488,7 @@
                         <td>-</td>
                         <td>${points}</td>
                         <td>${points}</td>
-                    `;
-                    scoreTable.appendChild(row);
-                });
-
-                data.loserPlayers.forEach(player => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${data.date}</td>
-                        <td>${player}</td>
-                        <td>-</td>
-                        <td>0</td>
-                        <td>0</td>
+                        <td>Winners: ${data.winnerPlayers.join(", ")}, Losers: ${data.loserPlayers.join(", ")}</td>
                     `;
                     scoreTable.appendChild(row);
                 });
