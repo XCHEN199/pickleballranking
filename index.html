@@ -443,7 +443,9 @@
                 const player = doc.data();
                 const newScore = (player.latestScore || 0) + score;
                 console.log(`Updating score for ${playerName}: ${newScore}`);
-                playerDoc.update({ latestScore: newScore });
+                playerDoc.update({ latestScore: newScore }).then(() => {
+                    fetchRankings(); // Fetch rankings again to update the table
+                });
             }
         });
     }
