@@ -445,7 +445,7 @@
                 console.log(`Updating score for ${playerName}: ${newScore}`);
                 playerDoc.update({ 
                     latestScore: newScore,
-                    totalScore: newScore // Ensure total score is also updated
+                    totalScore: (player.totalScore || 0) + score // Ensure total score is also updated
                 }).then(() => {
                     fetchRankings(); // Fetch rankings again to update the table
                 });
@@ -471,7 +471,7 @@
 
     function fetchScores() {
         scoreTable.innerHTML = '';
-        db.collection("attendance").where("approved", "==", true).get().then((querySnapshot) => {
+        db.collection("attendance").where("approved", "==", true).orderBy("date", "desc").get().then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 const row = document.createElement('tr');
@@ -486,7 +486,7 @@
             });
         });
 
-        db.collection("games").where("approved", "==", true).get().then((querySnapshot) => {
+        db.collection("games").where("approved", "==", true).orderBy("date", "desc").get().then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 const winnerTotalScore = calculateTotalScore(data.winnerPlayers);
@@ -513,7 +513,7 @@
                             <td>${player}</td>
                             <td>-</td>
                             <td>${points}</td>
-                            <td>Winners: ${data.winnerPlayers.join(", ")}, Losers: ${data.loserPlayers.join(", ")}</td>
+                            <td>Winners: ${data.winnerPlayers.map(wp => wp + ` (Score: ${players.find(p => p.name === wp)?.totalScore || 0})`).join(", ")}, Losers: ${data.loserPlayers.map(lp => lp + ` (Score: ${players.find(p => p.name === lp)?.totalScore || 0})`).join(", ")}</td>
                         `;
                         scoreTable.appendChild(row);
                     }
