@@ -61,7 +61,7 @@
             box-sizing: border-box;
         }
         input[type="date"] {
-            width: calc(100% - 220px);
+            width: 100%;
         }
         input[type="submit"], button {
             width: 100%;
@@ -272,6 +272,7 @@
     function updatePlayerDropdowns() {
         db.collection("players").get().then((querySnapshot) => {
             players = querySnapshot.docs.map(doc => doc.data());
+            console.log("Players loaded:", players);
             const playerSelects = [
                 document.getElementById('attendancePlayerName'),
                 document.getElementById('winnerPlayer1'),
@@ -287,6 +288,8 @@
                     select.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.totalScore || 0})</option>`;
                 });
             });
+        }).catch((error) => {
+            console.error("Error loading players:", error);
         });
     }
 
@@ -327,7 +330,7 @@
             alert('Attendance approved');
             loadPendingSubmissions();
         }).catch((error) => {
-            console.error('Error approving attendance: ', error);
+            console.error('Error approving attendance:', error);
         });
     }
 
@@ -336,7 +339,7 @@
             alert('Attendance denied');
             button.parentElement.remove();
         }).catch((error) => {
-            console.error('Error denying attendance: ', error);
+            console.error('Error denying attendance:', error);
         });
     }
 
@@ -348,7 +351,7 @@
             alert('Game approved');
             loadPendingSubmissions();
         }).catch((error) => {
-            console.error('Error approving game: ', error);
+            console.error('Error approving game:', error);
         });
     }
 
@@ -357,7 +360,7 @@
             alert('Game denied');
             button.parentElement.remove();
         }).catch((error) => {
-            console.error('Error denying game: ', error);
+            console.error('Error denying game:', error);
         });
     }
 
@@ -419,7 +422,7 @@
             }
             alert('Rankings updated');
         }).catch((error) => {
-            console.error('Error updating rankings: ', error);
+            console.error('Error updating rankings:', error);
         });
     }
 
@@ -433,6 +436,7 @@
                 }
             }
         });
+        console.log("Total score calculated:", totalScore);
         return totalScore;
     }
 
@@ -442,14 +446,17 @@
             if (doc.exists) {
                 const player = doc.data();
                 const newScore = (player.latestScore || 0) + score;
-                console.log(`Updating score for ${playerName}: ${newScore}`);
+                const newTotalScore = (player.totalScore || 0) + score;
+                console.log(`Updating score for ${playerName}: latestScore=${newScore}, totalScore=${newTotalScore}`);
                 playerDoc.update({ 
                     latestScore: newScore,
-                    totalScore: (player.totalScore || 0) + score // Ensure total score is also updated
+                    totalScore: newTotalScore // Ensure total score is also updated
                 }).then(() => {
                     fetchRankings(); // Fetch rankings again to update the table
                 });
             }
+        }).catch((error) => {
+            console.error('Error updating player score:', error);
         });
     }
 
@@ -458,6 +465,7 @@
         db.collection("players").orderBy("totalScore", "desc").get().then((querySnapshot) => {
             querySnapshot.forEach((doc, index) => {
                 const player = doc.data();
+                console.log("Fetched ranking for player:", player);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${index + 1}</td>
@@ -466,6 +474,8 @@
                 `;
                 rankingTable.appendChild(row);
             });
+        }).catch((error) => {
+            console.error('Error fetching rankings:', error);
         });
     }
 
@@ -474,6 +484,7 @@
         db.collection("attendance").where("approved", "==", true).orderBy("date", "desc").get().then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
+                console.log("Fetched attendance record:", data);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${data.date}</td>
@@ -489,6 +500,7 @@
         db.collection("games").where("approved", "==", true).orderBy("date", "desc").get().then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
+                console.log("Fetched game record:", data);
                 const winnerTotalScore = calculateTotalScore(data.winnerPlayers);
                 const loserTotalScore = calculateTotalScore(data.loserPlayers);
 
@@ -519,6 +531,8 @@
                     }
                 });
             });
+        }).catch((error) => {
+            console.error('Error fetching scores:', error);
         });
     }
 
@@ -549,7 +563,7 @@
             alert('Player added successfully.');
             addPlayerForm.reset();
         }).catch((error) => {
-            console.error('Error adding player: ', error);
+            console.error('Error adding player:', error);
         });
     });
 
@@ -577,7 +591,7 @@
             reportAttendanceForm.reset();
             loadPendingSubmissions();
         }).catch((error) => {
-            console.error('Error submitting attendance: ', error);
+            console.error('Error submitting attendance:', error);
         });
     });
 
@@ -607,7 +621,7 @@
             reportGameResultsForm.reset();
             loadPendingSubmissions();
         }).catch((error) => {
-            console.error('Error submitting game results: ', error);
+            console.error('Error submitting game results:', error);
         });
     });
 
