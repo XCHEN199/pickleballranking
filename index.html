@@ -61,7 +61,7 @@
             box-sizing: border-box;
         }
         input[type="date"] {
-            width: 100%;
+            width: calc(100% - 220px);
         }
         input[type="submit"], button {
             width: 100%;
@@ -193,7 +193,7 @@
         </div>
         <div class="form-row">
             <label for="attendanceDate">Date:</label>
-            <input type="date" id="attendanceDate" name="attendanceDate" required style="width: calc(100% - 220px);">
+            <input type="date" id="attendanceDate" name="attendanceDate" required style="width: 100%;">
         </div>
         <div class="form-row">
             <label for="attendanceStatus">Attendance:</label>
@@ -211,7 +211,7 @@
     <form id="reportGameResultsForm">
         <div class="form-row">
             <label for="gameDate">Date:</label>
-            <input type="date" id="gameDate" name="gameDate" required style="width: calc(100% - 220px);">
+            <input type="date" id="gameDate" name="gameDate" required style="width: 100%;">
         </div>
         <div class="form-row">
             <label for="winnerPlayer1">Winner Player 1:</label>
