@@ -284,7 +284,7 @@
                 select.innerHTML = '<option value="">Select Player</option>';
                 select.innerHTML += '<option value="Unranked Player">Unranked Player</option>';
                 players.forEach(player => {
-                    select.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.latestScore})</option>`;
+                    select.innerHTML += `<option value="${player.name}">${player.name} (Score: ${player.totalScore || 0})</option>`;
                 });
             });
         });
@@ -443,7 +443,10 @@
                 const player = doc.data();
                 const newScore = (player.latestScore || 0) + score;
                 console.log(`Updating score for ${playerName}: ${newScore}`);
-                playerDoc.update({ latestScore: newScore }).then(() => {
+                playerDoc.update({ 
+                    latestScore: newScore,
+                    totalScore: newScore // Ensure total score is also updated
+                }).then(() => {
                     fetchRankings(); // Fetch rankings again to update the table
                 });
             }
@@ -452,14 +455,14 @@
 
     function fetchRankings() {
         rankingTable.innerHTML = '';
-        db.collection("players").orderBy("latestScore", "desc").get().then((querySnapshot) => {
+        db.collection("players").orderBy("totalScore", "desc").get().then((querySnapshot) => {
             querySnapshot.forEach((doc, index) => {
                 const player = doc.data();
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${player.name}</td>
-                    <td>${player.latestScore}</td>
+                    <td>${player.totalScore || 0}</td>
                 `;
                 rankingTable.appendChild(row);
             });
