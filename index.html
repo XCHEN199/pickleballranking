@@ -60,6 +60,9 @@
             margin-bottom: 8px;
             box-sizing: border-box;
         }
+        input[type="date"] {
+            width: 100%;
+        }
         input[type="submit"], button {
             width: 100%;
             max-width: 200px;
@@ -604,6 +607,10 @@
     updatePlayerDropdowns();
     loadPendingSubmissions();
     checkAdmin();
+
+    // Fetch rankings and scores initially
+    fetchRankings();
+    fetchScores();
 
     // Add event listener to the Update Rankings button
     updateRankingsButton.addEventListener('click', updateRankings);
